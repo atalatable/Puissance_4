@@ -1,19 +1,46 @@
 from init import grid
 
-def load_grid(file: str) -> int[int]:
-    with open(file, 'r') as f:
-        for i in range(6):
-            line = list(f.readline())
 
-            for j in range(7):
-                grid[i][j] = -1 if int(line[j] == 2) else int(line[j]) 
-                
+def load_grid(filename: str) -> list:
+    with open(filename, 'r') as file:
+        i = 0
+        for line in file:
+            row = list(line[:-1])
+            j = 0
+            for value in row:
+                grid[i][j] = -1 if (int(value) == 2) else int(value)
+                j += 1
+            i += 1
+
     return grid
 
 
-def save_grid(file: str) -> None:
-    with open(file, 'w') as f:
-        for i in range(7):
-            for j in range(6):
-                f.write(2 if (grid[i][j] == -1) else grid[i][j])
-            f.write('\n')
+def save_grid(filename: str) -> None:
+    with open(filename, 'w') as file:
+        for i in range(6):
+            for j in range(7):
+                file.write(2 if (grid[i][j] == -1) else grid[i][j])
+            file.write('\n')
+
+# for debug only
+def show_grid() -> None:
+    for i in range(6):
+        print('   +'+ f'{"-"*3}+'*7)
+        print(f"   |", end="")
+        for j in range(7):
+            if grid[i][j] == 1:
+                print(" C ", end="")
+            elif grid[i][j] == -1:
+                print(" J ", end="")
+            else:
+                print("   ", end="")
+
+            
+            print("|", end="")
+        print()
+    print('   +'+ f'{"-"*3}+'*7)
+
+
+if __name__ == "__main__":
+    load_grid("./grids/game1.txt")
+    show_grid()
