@@ -1,2 +1,5 @@
 grids/*
 grids/
+
+.vscode/
+__pycache__/
