@@ -18,7 +18,7 @@ def save_grid(filename: str) -> None:
     with open(filename, 'w') as file:
         for i in range(6):
             for j in range(7):
-                file.write(2 if (grid[i][j] == -1) else grid[i][j])
+                file.write(str(2 if (grid[i][j] == -1) else grid[i][j]))
             file.write('\n')
 
 # for debug only
@@ -41,5 +41,5 @@ def show_grid() -> None:
 
 
 if __name__ == "__main__":
-    load_grid("./grids/game1.txt")
+    load_grid("./grids/game.txt")
     show_grid()
