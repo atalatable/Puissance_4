@@ -1,4 +1,3 @@
-from init import grid
 from save import load_grid, show_grid
 
 
@@ -14,22 +13,22 @@ def verify_grid(grid: list) -> str:
     # checking columns
     for i in range(7):
         result = vertical_check(grid, i)
-        if result != "": return result
+        if result: return result
     
     # checking lines
     for i in range(6):
         result = horizontal_check(grid, i)
-        if result != "": return result
+        if result: return result
 
     # descending diagonals 
     for i in range(3):
         result = descending_diagonal_check(grid, i)
-        if result != "": return result
+        if result: return result
 
-    # ascneding diagonals
+    # ascending diagonals
     for i in range(3):
         result = ascending_diagonal_check(grid, i)
-        if result != "": return result
+        if result: return result
     
     return ""
 
@@ -117,7 +116,9 @@ def ascending_diagonal_check(grid: list, column: int) -> str:
 def main():
     grid = load_grid("./grids/game1.txt")
     show_grid()
-    print(verify_grid(grid))
+    winner = verify_grid(grid)
+    if winner: print(f'\nThe winner is {winner} !\n')
+    else: print(f'\nThe game is not finnished yet !\n')
 
 if __name__ == "__main__":
     main()

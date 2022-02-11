@@ -89,7 +89,6 @@ def start_menu(stdscr) -> int:
         # Wait for next input
         k = stdscr.getch()
 
-
 def main():
     choice = curses.wrapper(start_menu)
     if choice == 1: pass

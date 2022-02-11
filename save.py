@@ -28,9 +28,9 @@ def show_grid() -> None:
         print(f"   |", end="")
         for j in range(7):
             if grid[i][j] == 1:
-                print(" C ", end="")
+                print(" \033[91m■\033[0m ", end="")
             elif grid[i][j] == -1:
-                print(" J ", end="")
+                print(" \033[93m■\033[0m ", end="")
             else:
                 print("   ", end="")
 
@@ -41,5 +41,5 @@ def show_grid() -> None:
 
 
 if __name__ == "__main__":
-    load_grid("./grids/game.txt")
+    grid = load_grid("./grids/game.txt")
     show_grid()
