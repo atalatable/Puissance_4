@@ -1,6 +1,5 @@
 from init import grid
 
-
 def load_grid(filename: str) -> list:
     with open(filename, 'r') as file:
         i = 0

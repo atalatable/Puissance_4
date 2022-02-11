@@ -3,14 +3,14 @@ import curses
 
 from init import KEY_ENTER, KEY_ESC
 
-def start_menu(stdscr) -> str:
+def start_menu(stdscr) -> int:
     """draws the start screen
 
     Args:
         stdscr curses: look at curses doc for further details
 
     Returns:
-        str: Return the choice of the user either 1 (play locally) 2 (multiplayer) 3 (leave)
+        int: Return the choice of the user either 1 (play locally) 2 (multiplayer) 3 (leave)
     """
     k = 0
     choice = 0
@@ -40,7 +40,7 @@ def start_menu(stdscr) -> str:
         elif k == KEY_ENTER: return choice%3 + 1
 
         # Declaration of strings
-        title =    "======= Four in a row ======="
+        title =    "==== Four in a row ===="
         subtitle = "Made by KrishenK and Atalata."
         statusbarstr = "Press 'esc' to exit"
         optionstr = ["1. Play local ", "2. Multiplayer", "3.   Leave    "]
@@ -91,7 +91,10 @@ def start_menu(stdscr) -> str:
 
 
 def main():
-    print(curses.wrapper(start_menu))
+    choice = curses.wrapper(start_menu)
+    if choice == 1: pass
+    elif choice == 2: pass
+    elif choice == 3: pass
 
 if __name__ == "__main__":
     main()
