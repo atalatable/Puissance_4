@@ -39,6 +39,28 @@ def show_grid() -> None:
         print()
     print('   +'+ f'{"-"*3}+'*7)
 
+def add_piece(grid: list, color: int, column: int) -> bool:
+    """Add a piece of the given color inside the grid (at the given column)
+
+    Args:
+        grid (list): the current four in a row grid
+        color (int): 1 if it's yellow and 0 if it is red
+        column (int): the column in which you want to add the piece
+        
+    Returns:
+        bool: False if the column is full, True if everything is fine
+    """
+    if grid[0][column] != 0: return False
+    
+    for i in range(5):
+        if grid[i+1][column] != 0: 
+            if color == 0: grid[i][column] = 1
+            else: grid[i][column] = -1
+            return True
+
+    if color == 0: grid[5][column] = 1
+    else: grid[5][column] = -1
+
 
 if __name__ == "__main__":
     grid = load_grid("./grids/game.txt")

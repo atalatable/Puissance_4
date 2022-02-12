@@ -1,6 +1,3 @@
-from save import load_grid, show_grid
-
-
 def verify_grid(grid: list) -> str:
     """Check if there is any winners in the given grid
 
@@ -8,7 +5,7 @@ def verify_grid(grid: list) -> str:
         grid (list): the four in a row grid
 
     Returns:
-        str: return "red" if red wins "yellow" if yellow wins and "" if no one wins
+        str: return "red" if red wins "yellow" if yellow wins, "full" if the grid is full and "" if no one wins atm
     """
     # checking columns
     for i in range(7):
@@ -29,6 +26,8 @@ def verify_grid(grid: list) -> str:
     for i in range(3):
         result = ascending_diagonal_check(grid, i)
         if result: return result
+        
+    if full_grid(grid): return "full"
     
     return ""
 
@@ -112,13 +111,16 @@ def ascending_diagonal_check(grid: list, column: int) -> str:
                     return "red"
     return ""
 
+def full_grid(grid: list) -> bool:
+    """check if the grid is full
 
-def main():
-    grid = load_grid("./grids/game1.txt")
-    show_grid()
-    winner = verify_grid(grid)
-    if winner: print(f'\nThe winner is {winner} !\n')
-    else: print(f'\nThe game is not finnished yet !\n')
+    Args:
+        grid (list): the faour in a row grid
 
-if __name__ == "__main__":
-    main()
+    Returns:
+        bool: False if the grid is not full and True if it is
+    """
+    for i in range(7):
+        for j in range(6):
+            if grid[i][j] == 0: return False
+    return True
