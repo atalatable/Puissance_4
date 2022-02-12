@@ -1,5 +1,6 @@
 # You need to install curses => pip install windows-curses
 import curses
+from tracemalloc import start
 
 from init import KEY_ENTER, KEY_ESC
 
@@ -7,7 +8,7 @@ def start_menu(stdscr) -> int:
     """draws the start screen
 
     Args:
-        stdscr curses: look at curses doc for further details
+        stdscr (curses): look at curses doc for further details
 
     Returns:
         int: Return the choice of the user either 1 (play locally) 2 (multiplayer) 3 (leave)
@@ -40,7 +41,7 @@ def start_menu(stdscr) -> int:
         elif k == KEY_ENTER: return choice%3 + 1
 
         # Declaration of strings
-        title =    "==== Four in a row ===="
+        title =    "======= Four in a row ======="
         subtitle = "Made by KrishenK and Atalata."
         statusbarstr = "Press 'esc' to exit"
         optionstr = ["1. Play local ", "2. Multiplayer", "3.   Leave    "]
@@ -88,12 +89,66 @@ def start_menu(stdscr) -> int:
 
         # Wait for next input
         k = stdscr.getch()
+        
+def local_play_screen(stdscr, yellow_turn: bool) -> int:
+    """Draws and handle player input for local play
+
+    Args:
+        stdsrcr (curses): look at curses doc for further details
+        yellow_turn (bool): true if it is yellow's turn and false if it is red's turn
+
+    Returns:
+        int: return the column in which the player wants to play
+    """
+    k = 0
+    choice = 0
+
+    # Clear and refresh the screen for a blank canvas
+    stdscr.clear()
+    stdscr.refresh()
+
+    # Start colors in curses
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_GREEN)
+    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+
+    # Loop where k is the last character pressed
+    while True:
+
+        # Initialization
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+        
+        if k == KEY_ESC: return -1
+        
+        linestr_1 = "+---"*7 + "+"
+        linestr_2 = "|   "*7 + "|"
+        statusbarstr = "Press 'esc' to exit"
+        
+        start_x_grid = int((width // 2) - (len(linestr_1) // 2) - len(linestr_1) % 2)
+        start_y = int((height // 2)-4)
+        
+        stdscr.attron(curses.color_pair(3))
+        stdscr.addstr(height-1, 0, statusbarstr)
+        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.attroff(curses.color_pair(3))
+        
+        for i in range(0, 10, 2):
+            stdscr.addstr(start_y + i, start_x_grid, linestr_1)
+            stdscr.addstr(start_y + i + 1, start_x_grid, linestr_2)
+        stdscr.addstr(start_y + 10, start_x_grid,  "+---"*7 + "+")
+
+        stdscr.refresh()
+        
+        k = stdscr.getch()
 
 def main():
-    choice = curses.wrapper(start_menu)
-    if choice == 1: pass
-    elif choice == 2: pass
-    elif choice == 3: pass
+    choice = -1
+    while choice != 3:
+        choice = curses.wrapper(start_menu)
+        if choice == 1: curses.wrapper(local_play_screen, True)
+        elif choice == 2: pass
 
 if __name__ == "__main__":
     main()
