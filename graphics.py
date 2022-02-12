@@ -160,7 +160,7 @@ def local_play_screen(stdscr, turn: int, grid: list) -> int:
             stdscr.addstr(start_y + i + 1, start_x_grid, linestr_2)
         stdscr.addstr(start_y + 12, start_x_grid, linestr_1)
         
-        stdscr.addstr(start_y - 1, start_x_grid + 2 + (choice%7)* 5, "!")
+        stdscr.addstr(start_y + 13, start_x_grid + 2 + (choice%7)* 5, "^")
         
         for i in range(6):
             for j in range(7):
