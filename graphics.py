@@ -1,7 +1,7 @@
 # You need to install curses => pip install windows-curses
 import curses
 
-from init import KEY_ENTER, KEY_ESC, grid
+from init import KEY_ENTER, KEY_ESC, KEY_RETURN, KEY_NUM, KEY_DOT, grid
 from save import load_grid
 
 title =    "======= Four in a row ======="
@@ -175,12 +175,194 @@ def local_play_screen(stdscr, turn: int, grid: list) -> int:
         
         k = stdscr.getch()
 
+def multiplayer_menu(stdscr) -> int:
+    """draws the start screen
+
+    Args:
+        stdscr (curses): look at curses doc for further details
+
+    Returns:
+        int: Return the choice of the user either 1 (play locally) 2 (multiplayer) 3 (leave)
+    """
+    k = 0
+    choice = 0
+
+    # Clear and refresh the screen for a blank canvas
+    stdscr.clear()
+    stdscr.refresh()
+
+    # Start colors in curses
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_GREEN)
+    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+
+    # Loop where k is the last character pressed
+    while True:
+
+        # Initialization
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+
+        if k == ord('1'): return 1                  # Create
+        elif k == ord('2'): return 2                # Join
+        elif k in [ord('3'), KEY_ESC]: return 3     # Return
+        elif k == curses.KEY_UP: choice -= 1
+        elif k == curses.KEY_DOWN: choice += 1
+        elif k == KEY_ENTER: return choice%3 + 1
+
+        # Declaration of strings
+        optionstr = ["1. Create ", "2. Join", "3. Return    "]
+        
+        # Centering calculations
+        start_x_option = int((width // 2) - (len(optionstr[0]) // 2) - len(optionstr[0]) % 2)
+        start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
+        start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
+        start_y = int((height // 2) - 2)
+
+        # Render status bar
+        stdscr.attron(curses.color_pair(3))
+        stdscr.addstr(height-1, 0, statusbarstr)
+        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.attroff(curses.color_pair(3))
+
+        # Turning on attributes for title
+        stdscr.attron(curses.color_pair(2))
+        stdscr.attron(curses.A_BOLD)
+
+        # Rendering title
+        stdscr.addstr(1, start_x_title, title)
+
+        # Turning off attributes for title
+        stdscr.attroff(curses.color_pair(2))
+        stdscr.attroff(curses.A_BOLD)
+
+        # Print rest of text
+        stdscr.addstr(3, start_x_subtitle, subtitle)
+        stdscr.addstr(2, (width // 2) - 3, '-' * 6)
+
+        # Print choices
+        for i in range(len(optionstr)):
+            if i == choice%3:
+                stdscr.addstr(start_y + i*2, start_x_option - 2, f'> {optionstr[i]}', curses.A_BOLD)
+            else: stdscr.addstr(start_y + i*2, start_x_option, optionstr[i])
+
+        stdscr.move(height - 1, width - 1)
+
+        # Refresh the screen
+        stdscr.refresh()
+
+        # Wait for next input
+        k = stdscr.getch()
+
+def multiplayer_address_menu(stdscr, type: int, ip = "", port = "") -> int:
+    """draws the start screen
+
+    Args:
+        stdscr (curses): look at curses doc for further details
+        type (int): 0: create a party and 1: join a party
+
+    Returns:
+        int: Return the choice of the user either 1 (play locally) 2 (multiplayer) 3 (leave)
+    """
+    k = 0
+    choice = 0
+    ipstr = ip
+    portstr = port
+
+    # Clear and refresh the screen for a blank canvas
+    stdscr.clear()
+    stdscr.refresh()
+
+    # Start colors in curses
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_GREEN)
+    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+
+    # Loop where k is the last character pressed
+    while True:
+
+        # Initialization
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+
+        if k == KEY_ESC: return -1     # Return
+        elif k == KEY_ENTER: 
+            if choice%3 != 2: choice += 1
+            else: return (ipstr, portstr)
+        elif k == curses.KEY_UP: choice -= 1
+        elif k == curses.KEY_DOWN: choice += 1
+        elif k == KEY_RETURN: 
+            if choice%3 == 0: ipstr = ipstr[:-1]
+            if choice%3 == 1: portstr = portstr[:-1]
+        elif k in KEY_NUM or k == KEY_DOT: 
+            if choice%3 == 0: ipstr += chr(k)
+            if choice%3 == 1: portstr += chr(k)
+        
+        # print(k)
+
+        # Declaration of strings
+        iplabelstr = "Address : "
+        portlabelstr = "Port : "
+        connectstr = "Connect" if type == 1 else "Create"
+        
+        # Centering calculations
+        start_x_ip = int((width // 2) - (len(iplabelstr) // 2) - len(iplabelstr) % 2)
+        start_x_port = int((width // 2) - (len(portlabelstr) // 2) - len(portlabelstr) % 2)
+        start_x_connect = int((width // 2) - (len(connectstr) // 2) - len(connectstr) % 2)
+        start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
+        start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
+        start_y = int((height // 2) - 2)
+
+        # Render status bar
+        stdscr.attron(curses.color_pair(3))
+        stdscr.addstr(height-1, 0, statusbarstr)
+        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.attroff(curses.color_pair(3))
+
+        # Turning on attributes for title
+        stdscr.attron(curses.color_pair(2))
+        stdscr.attron(curses.A_BOLD)
+
+        # Rendering title
+        stdscr.addstr(1, start_x_title, title)
+
+        # Turning off attributes for title
+        stdscr.attroff(curses.color_pair(2))
+        stdscr.attroff(curses.A_BOLD)
+
+        # Print rest of text
+        stdscr.addstr(3, start_x_subtitle, subtitle)
+        stdscr.addstr(2, (width // 2) - 3, '-' * 6)
+
+        # Print port and join input
+        inputs = [iplabelstr+ipstr, portlabelstr+portstr, connectstr]
+        for i in range(len(inputs)):
+            if i == choice%3: 
+                stdscr.addstr(start_y + i*2, start_x_ip, f'> {inputs[i]}', curses.A_BOLD)
+            else:
+                stdscr.addstr(start_y + i*2, start_x_port, inputs[i])
+
+        stdscr.move(height - 1, width - 1)
+
+        # Refresh the screen
+        stdscr.refresh()
+
+        # Wait for next input
+        k = stdscr.getch()
+
 def main():
     choice = -1
     while choice != 3:
         choice = curses.wrapper(start_menu)
         if choice == 1: curses.wrapper(local_play_screen, 0, grid)
-        elif choice == 2: pass
+        elif choice == 2: 
+            multichoice = -1
+            while multichoice != 3:
+                multichoice = curses.wrapper(multiplayer_menu)
+                if multichoice == 1: curses.wrapper(multiplayer_address_menu, 0, "127.0.0.1", "25565")
+                if multichoice == 2: curses.wrapper(multiplayer_address_menu, 1)
 
 if __name__ == "__main__":
     main()
