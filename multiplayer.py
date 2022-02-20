@@ -1,6 +1,5 @@
 from curses import wrapper
-from pydoc import cli
-from graphics import local_play_screen
+from graphics import local_play_screen, multiplayer_waiting_screen
 from check import verify_grid
 from save import add_piece
 import socket
@@ -51,12 +50,11 @@ def host(host: str, port: int, grid: list):
         print(data)
         if data.decode() != "win":
             (winner, grid) = multiplayer(client, 1, json.loads(data.decode()))
-            client.send(json.dumps(grid).encode())
-
-            print(winner)
 
             if winner == "yellow": client.send("win".encode())
             else: client.send(json.dumps(grid).encode())
+
+            wrapper(multiplayer_waiting_screen, 0, grid)
         else:
             winner = "red"
 
@@ -88,6 +86,8 @@ def join(host: str, port: int) -> None:
 
             if winner == "red": s.send("win".encode())
             else: s.send(json.dumps(grid).encode())
+
+            wrapper(multiplayer_waiting_screen, 1, grid)
         else:
             winner = "yellow"
     s.close()
