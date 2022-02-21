@@ -1,9 +1,10 @@
 from curses import wrapper
-from graphics import local_play_screen, multiplayer_waiting_screen
+from graphics import multiplayer_play_screen, multiplayer_waiting_screen
 from check import verify_grid
 from save import add_piece
 import socket
 import json
+import time
 
 from requests import get
 from save import load_grid
@@ -20,7 +21,7 @@ def multiplayer(s: socket, turn: int, grid: list) -> None:
     column = 0
     
     while winner == "" and not quit:
-        column = wrapper(local_play_screen, turn, grid)
+        column = wrapper(multiplayer_play_screen, s, turn, grid)
         if column == -1: break
         add_piece(grid, turn, column)
         winner = verify_grid(grid)
@@ -42,19 +43,20 @@ def host(host: str, port: int, grid: list):
     winner = ""
 
     while not winner:
+        wrapper(multiplayer_waiting_screen, client, 0, grid)
+
         try:
             data = client.recv(size)
         except ConnectionResetError:
             break
 
-        print(data)
         if data.decode() != "win":
             (winner, grid) = multiplayer(client, 1, json.loads(data.decode()))
 
             if winner == "yellow": client.send("win".encode())
-            else: client.send(json.dumps(grid).encode())
-
-            wrapper(multiplayer_waiting_screen, 0, grid)
+            else: 
+                client.send(b'play')
+                client.send(json.dumps(grid).encode())
         else:
             winner = "red"
 
@@ -79,15 +81,15 @@ def join(host: str, port: int) -> None:
         except ConnectionResetError:
             break
 
-        print(data)
-
         if data.decode() != "win":
             (winner, grid) = multiplayer(s, 0, json.loads(data.decode()))
 
             if winner == "red": s.send("win".encode())
-            else: s.send(json.dumps(grid).encode())
+            else: 
+                s.send(b'play')
+                s.send(json.dumps(grid).encode())
 
-            wrapper(multiplayer_waiting_screen, 1, grid)
+            wrapper(multiplayer_waiting_screen, s, 1, grid)
         else:
             winner = "yellow"
     s.close()
@@ -97,7 +99,8 @@ def join(host: str, port: int) -> None:
 if __name__ == "__main__":
     # print(get("https://api.ipify.org").text)
 
-    t = input('>>')
+    print
+    t = input('(host | join) >>')
     grid = load_grid('./grids/game1.txt')
-    if(t == 'join'): join('127.0.0.1', 25565)
-    else: host('127.0.0.1', 25565, grid)
+    if t == 'join': join('127.0.0.1', 25565)
+    elif t == 'host': host('127.0.0.1', 25565, grid)
