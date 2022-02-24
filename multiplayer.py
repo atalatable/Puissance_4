@@ -52,7 +52,7 @@ def host(address : Tuple[str, int], grid: list) -> str:
     # Waiting for client connection
     client, address = s.accept()
 
-    # Send the grid to the oppenent
+    # Send the grid to the opponent
     client.send(json.dumps(grid).encode())
 
     winner = ""
@@ -76,7 +76,7 @@ def host(address : Tuple[str, int], grid: list) -> str:
             # Display the game and get the results (the grid and the winner if he has won)
             (winner, grid) = multiplayer(client, 1, json.loads(data.decode()))
 
-            # If he wins send to the oppenent that he loses
+            # If he wins send to the opponent that he loses
             # first send -> close the waiting screen
             # second send -> inform the lose
             if winner == "yellow": client.send(b'win'); time.sleep(0.1); client.send(b'win')
