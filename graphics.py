@@ -125,7 +125,7 @@ def local_play_screen(stdscr, turn: int, grid: list) -> int:
         if k == KEY_ENTER: return choice % 7
         
         
-        turnstr = ["It is Red's turn !", "It is Yellow's turn !"]
+        turnstr = [f"It is Red's turn !", f"It is Yellow's turn !"]
         turn_start = [int((width // 2) - (len(turnstr[0]) // 2) - len(turnstr[0]) % 2), 
                       int((width // 2) - (len(turnstr[1]) // 2) - len(turnstr[1]) % 2)]
         linestr_1 = "+----"*7 + "+"

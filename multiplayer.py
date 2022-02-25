@@ -6,6 +6,7 @@ from save import add_piece
 import socket
 import json
 import time
+from requests import get
 
 from save import load_grid
 
@@ -21,9 +22,10 @@ def multiplayer(s: socket, turn: int, grid: list) -> None:
     while winner == "" and not quit:
         column = wrapper(multiplayer_play_screen, s, turn, grid)
         if column == -1: break
-        add_piece(grid, turn, column)
-        winner = verify_grid(grid)
-        return (winner, grid)
+        check = add_piece(grid, turn, column)
+        if check:
+            winner = verify_grid(grid)
+            return (winner, grid)
 
 
 def host(address : Tuple[str, int], grid: list) -> str:
@@ -46,6 +48,8 @@ def host(address : Tuple[str, int], grid: list) -> str:
     except Exception as e:
         print(e)
         return None
+
+    # print(f'Your IP addresses :\n\nIPV4 : {get("https://api.ipify.org").text}\nIPV6 : {get("https://api64.ipify.org").text}')
 
     s.listen(backlog)
 
