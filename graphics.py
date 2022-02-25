@@ -2,7 +2,6 @@
 import curses
 
 from init import KEY_ENTER, KEY_ESC, KEY_RETURN, KEY_NUM, KEY_DOT, grid
-from save import load_grid
 
 title =    "======= Four in a row ======="
 subtitle = "Made by KrishenK and Atalata."
@@ -176,13 +175,13 @@ def local_play_screen(stdscr, turn: int, grid: list) -> int:
         k = stdscr.getch()
 
 def multiplayer_menu(stdscr) -> int:
-    """draws the start screen
+    """draws the multiplayer screen
 
     Args:
         stdscr (curses): look at curses doc for further details
 
     Returns:
-        int: Return the choice of the user either 1 (play locally) 2 (multiplayer) 3 (leave)
+        int: Return the choice of the user either 1 (create a party) 2 (join a party) 3 (return to the main menu)
     """
     k = 0
     choice = 0
@@ -255,20 +254,23 @@ def multiplayer_menu(stdscr) -> int:
         # Wait for next input
         k = stdscr.getch()
 
-def multiplayer_address_menu(stdscr, type: int, ip = "", port = "") -> int:
-    """draws the start screen
+def multiplayer_address_menu(stdscr, type: int, host: str = '', port: int = 0) -> int:
+    """draws the address screen, where the hoster or joiner will specify the address and the port for play together
 
     Args:
         stdscr (curses): look at curses doc for further details
+        host (str): the IP address of the hoster (default '')
+        port (int): the port of the hoster (default 0)
         type (int): 0: create a party and 1: join a party
 
     Returns:
-        int: Return the choice of the user either 1 (play locally) 2 (multiplayer) 3 (leave)
+        int: Return -1 to cancel
+        (str, int): Return a tuple (address, port) for the socket connection
     """
     k = 0
     choice = 0
-    ipstr = ip
-    portstr = port
+    ipstr = host
+    portstr = str(port) if port != 0 else ''
 
     # Clear and refresh the screen for a blank canvas
     stdscr.clear()
@@ -290,7 +292,7 @@ def multiplayer_address_menu(stdscr, type: int, ip = "", port = "") -> int:
         if k == KEY_ESC: return -1     # Return
         elif k == KEY_ENTER: 
             if choice%3 != 2: choice += 1
-            else: return (ipstr, portstr)
+            else: return (ipstr, int(portstr))
         elif k == curses.KEY_UP: choice -= 1
         elif k == curses.KEY_DOWN: choice += 1
         elif k == KEY_RETURN: 
@@ -310,7 +312,6 @@ def multiplayer_address_menu(stdscr, type: int, ip = "", port = "") -> int:
         # Centering calculations
         start_x_ip = int((width // 2) - (len(iplabelstr) // 2) - len(iplabelstr) % 2)
         start_x_port = int((width // 2) - (len(portlabelstr) // 2) - len(portlabelstr) % 2)
-        start_x_connect = int((width // 2) - (len(connectstr) // 2) - len(connectstr) % 2)
         start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
         start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
         start_y = int((height // 2) - 2)
@@ -352,17 +353,20 @@ def multiplayer_address_menu(stdscr, type: int, ip = "", port = "") -> int:
         # Wait for next input
         k = stdscr.getch()
 
-def multiplayer_play_screen(stdscr, socket, turn: int, grid: list) -> int:
-    """Draws and handle player input for local play
+def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
+    """Draws and handle player input for multiplayer play
 
     Args:
         stdsrcr (curses): look at curses doc for further details
+        s (socket) : the instance of the s channel
         turn (int): 0 if it is red's turn and 1 if it's yellow's turn
         grid (list): the four in a row grid
 
     Returns:
         int: return the column in which the player wants to play
     """
+    import select, time
+
     k = 0
     choice = 0
 
@@ -377,9 +381,14 @@ def multiplayer_play_screen(stdscr, socket, turn: int, grid: list) -> int:
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 
+    inputs = [s]
+    outputs = [s]
+
+    # Set the socket in 'non-blocking' mode
+    s.setblocking(False)
+
     # Loop where k is the last character pressed
     while True:
-
         # Initialization
         stdscr.clear()
         height, width = stdscr.getmaxyx()
@@ -387,9 +396,7 @@ def multiplayer_play_screen(stdscr, socket, turn: int, grid: list) -> int:
         if k == KEY_ESC: return -1
         if k == curses.KEY_RIGHT: choice += 1
         if k == curses.KEY_LEFT: choice -= 1
-        if k == KEY_ENTER: return choice % 7
-
-        socket.send(str(choice).encode())
+        if k == KEY_ENTER: return choice % 7        
         
         turnstr = ["It is Red's turn !", "It is Yellow's turn !"]
         turn_start = [int((width // 2) - (len(turnstr[0]) // 2) - len(turnstr[0]) % 2), 
@@ -438,22 +445,37 @@ def multiplayer_play_screen(stdscr, socket, turn: int, grid: list) -> int:
 
         stdscr.refresh()
 
+        # Sending socket in background
+        readable, writable, exceptional = select.select(inputs, outputs, inputs, 1) 
+
+        for s in writable:
+            # send the current cursor position
+            s.send(str(choice).encode()) 
+            # wait 0.001s to avoid bad data sending (like '-1-2')
+            time.sleep(0.001) 
+
         k = stdscr.getch()
 
 
-def multiplayer_waiting_screen(stdscr, socket, turn: int, grid: list) -> int:
-    """Draws and handle player input for local play
+
+def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
+    """Draws the for in a row grid and the opponent choice position
 
     Args:
         stdsrcr (curses): look at curses doc for further details
+        s (s) : the instance of the s channel
         turn (int): 0 if it is red's turn and 1 if it's yellow's turn
         grid (list): the four in a row grid
-
-    Returns:
-        int: return the column in which the player wants to play
     """
-    # k = 0
+    import select
+
     choice = 0
+    data = '0'
+    inputs = [s]
+    outputs = [s]
+
+    # nodelay permits to set the getch() in non-blocking mode
+    stdscr.nodelay(1)
 
     # Clear and refresh the screen for a blank canvas
     stdscr.clear()
@@ -466,42 +488,34 @@ def multiplayer_waiting_screen(stdscr, socket, turn: int, grid: list) -> int:
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 
+    # Set the socket to a non-blocking mode
+    s.setblocking(False)
 
-    
-    # Initialization
-    stdscr.clear()
-    height, width = stdscr.getmaxyx()
-            
-    # if k == KEY_ESC: return -1
-    # if k == curses.KEY_RIGHT: choice += 1
-    # if k == curses.KEY_LEFT: choice -= 1
-    # if k == KEY_ENTER: return choice % 7
-            
-    while True: 
-        stdscr.clear()
-        try: 
-            data = socket.recv(1024).decode()
-            if data == "play": return
+    # Loop where k is the last character pressed
+    while True:
+        # Read the data in background
+        readable, writable, exceptional = select.select(inputs, outputs, inputs, 0.1)
+
+        for s in readable:
+            data = s.recv(1024).decode()
+            if data in ['play', 'win', 'full']: return
             else: choice = int(data)
-        except Exception:
-            pass
 
+        # Initialization
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+        
         turnstr = ["It is Red's turn !", "It is Yellow's turn !"]
         turn_start = [int((width // 2) - (len(turnstr[0]) // 2) - len(turnstr[0]) % 2), 
-                    int((width // 2) - (len(turnstr[1]) // 2) - len(turnstr[1]) % 2)]
+                      int((width // 2) - (len(turnstr[1]) // 2) - len(turnstr[1]) % 2)]
         linestr_1 = "+----"*7 + "+"
         linestr_2 = "|    "*7 + "|"
-                
+        
         start_x_grid = int((width // 2) - (len(linestr_1) // 2) - len(linestr_1) % 2)
         start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
         start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
         start_y = int((height // 2)-5)
-            
-        stdscr.attron(curses.color_pair(3))
-        stdscr.addstr(height-1, 0, statusbarstr)
-        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
-        stdscr.attroff(curses.color_pair(3))
-                
+        
         # Turning on attributes for title
         stdscr.attron(curses.color_pair(4))
         stdscr.attron(curses.A_BOLD)
@@ -512,30 +526,31 @@ def multiplayer_waiting_screen(stdscr, socket, turn: int, grid: list) -> int:
         # Turning off attributes for title
         stdscr.attroff(curses.color_pair(4))
         stdscr.attroff(curses.A_BOLD)
-                
+        
         stdscr.addstr(3, start_x_subtitle, subtitle)
-                
+        
         for i in range(0, 12, 2):
             stdscr.addstr(start_y + i, start_x_grid, linestr_1)
             stdscr.addstr(start_y + i + 1, start_x_grid, linestr_2)
         stdscr.addstr(start_y + 12, start_x_grid, linestr_1)
-                
+        
         stdscr.addstr(start_y + 13, start_x_grid + 2 + (choice%7)* 5, "^")
-                
+        
         for i in range(6):
             for j in range(7):
                 if grid[i][j] == 1: stdscr.addstr(start_y + 1 + (i * 2), start_x_grid + 2 + (j*5), "  ", curses.color_pair(1))
                 elif grid[i][j] == -1: stdscr.addstr(start_y + 1 + (i * 2), start_x_grid + 2 + (j*5), "  ", curses.color_pair(2))
-                        
+                
         stdscr.addstr(height - 3, turn_start[turn], turnstr[turn])
 
         stdscr.move(height - 1, width - 1)
-
+        
         stdscr.refresh()
 
-        # k = stdscr.getch()
+        stdscr.getch()
 
-
+    
+        
 def main():
     choice = -1
     while choice != 3:
