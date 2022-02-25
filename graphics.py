@@ -312,7 +312,6 @@ def multiplayer_address_menu(stdscr, type: int, host: str = '', port: int = 0) -
         # Centering calculations
         start_x_ip = int((width // 2) - (len(iplabelstr) // 2) - len(iplabelstr) % 2)
         start_x_port = int((width // 2) - (len(portlabelstr) // 2) - len(portlabelstr) % 2)
-        start_x_connect = int((width // 2) - (len(connectstr) // 2) - len(connectstr) % 2)
         start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
         start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
         start_y = int((height // 2) - 2)
