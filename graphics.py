@@ -386,7 +386,7 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
     outputs = [s]
 
     # Set the socket in 'non-blocking' mode
-    s.setblocking(False)
+    s.setblocking(True)
 
     # Loop where k is the last character pressed
     while True:
@@ -454,6 +454,9 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
         #     s.send(str(choice).encode()) 
 
         stdscr.addstr(1, 0, str(choice))
+
+        choice %= 7
+
         s.send(str(choice).encode())
         k = stdscr.getch()
         
@@ -504,13 +507,13 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         #     datas.append(data)
 
         try:
-            data = s.recv(1024).decode()
+            data = s.recv(1).decode()
             s.setblocking(False)
         except:
             pass
 
-        if data in ['play', 'win', 'full']: return
-        elif data.lstrip("-").isdigit(): choice = int(data)
+        if int(data) == 9: return
+        else: choice = int(data)
 
         time.sleep(0.1)
 
@@ -518,7 +521,7 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         stdscr.clear()
         height, width = stdscr.getmaxyx()
 
-        stdscr.addstr(0, 0, str(datas))
+        stdscr.addstr(0, 0, str(data))
         stdscr.addstr(1, 0, str(choice))
         
         turnstr = ["It is Red's turn !", "It is Yellow's turn !"]
