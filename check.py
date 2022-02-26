@@ -121,6 +121,6 @@ def full_grid(grid: list) -> bool:
         bool: False if the grid is not full and True if it is
     """
     for i in range(6):
-        for j in range(5):
+        for j in range(7):
             if grid[i][j] == 0: return False
     return True

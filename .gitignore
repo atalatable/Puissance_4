@@ -9,3 +9,5 @@ Include/
 Lib/
 Scripts/
 pyvenv.cfg
+
+logs/

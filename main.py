@@ -16,7 +16,7 @@ def main():
             while multichoice != 3:
                 multichoice = wrapper(multiplayer_menu)
                 if multichoice == 1: host(wrapper(multiplayer_address_menu, 0, "127.0.0.1", "4444"), grid)
-                if multichoice == 2: join(wrapper(multiplayer_address_menu, 1))
+                if multichoice == 2: join(wrapper(multiplayer_address_menu, 1, "127.0.0.1"))
         
 if __name__ == "__main__":
     main()

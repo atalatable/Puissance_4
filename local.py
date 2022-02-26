@@ -1,7 +1,7 @@
 from curses import wrapper
 from graphics import local_play_screen
 from check import verify_grid
-from save import add_piece
+from save import add_piece, load_grid
 
 
 def local(grid: list) -> None:
@@ -12,6 +12,8 @@ def local(grid: list) -> None:
     """
     winner, quit, turn = "", False, 1
     column, line = 0, 0
+
+    grid = load_grid("./grids/grid3.txt")
 
     while winner == "" and not quit:
         column = wrapper(local_play_screen, turn, grid)

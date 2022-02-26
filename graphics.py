@@ -1,5 +1,6 @@
 # You need to install curses => pip install windows-curses
 import curses
+import time
 
 from init import KEY_ENTER, KEY_ESC, KEY_RETURN, KEY_NUM, KEY_DOT, grid
 
@@ -500,6 +501,8 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
             data = s.recv(1024).decode()
             if data in ['play', 'win', 'full']: return
             else: choice = int(data)
+
+        time.sleep(0.1)
 
         # Initialization
         stdscr.clear()

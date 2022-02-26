@@ -49,7 +49,7 @@ def host(address : Tuple[str, int], grid: list) -> str:
         print(e)
         return None
 
-    # print(f'Your IP addresses :\n\nIPV4 : {get("https://api.ipify.org").text}\nIPV6 : {get("https://api64.ipify.org").text}')
+    print(f'Your IP addresses :\n\nIPV4 : {get("https://api.ipify.org").text}\nIPV6 : {get("https://api64.ipify.org").text}')
 
     s.listen(backlog)
 
