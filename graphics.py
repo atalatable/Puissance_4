@@ -474,7 +474,7 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
     import select
 
     choice = 0
-    data = '0'
+    data = "5"
     inputs = [s]
     outputs = [s]
 
@@ -515,8 +515,6 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         if int(data) == 9: return
         else: choice = int(data)
 
-        time.sleep(0.1)
-
         # Initialization
         stdscr.clear()
         height, width = stdscr.getmaxyx()
@@ -545,14 +543,14 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         # Turning off attributes for title
         stdscr.attroff(curses.color_pair(4))
         stdscr.attroff(curses.A_BOLD)
-        
+
         stdscr.addstr(3, start_x_subtitle, subtitle)
         
         for i in range(0, 12, 2):
             stdscr.addstr(start_y + i, start_x_grid, linestr_1)
             stdscr.addstr(start_y + i + 1, start_x_grid, linestr_2)
         stdscr.addstr(start_y + 12, start_x_grid, linestr_1)
-        
+
         stdscr.addstr(start_y + 13, start_x_grid + 2 + (choice%7)* 5, "^")
         
         for i in range(6):

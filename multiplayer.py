@@ -86,9 +86,9 @@ def host(address : Tuple[str, int], grid: list) -> str:
             if winner == "yellow": client.send(b'win'); time.sleep(0.1); client.send(b'win')
             else: 
                 # Send that he can play and send the new grid
-                time.sleep(.5)
+                # time.sleep(.5)
                 client.send(b'9')
-                time.sleep(.5)
+                # time.sleep(.5)
                 client.send(json.dumps(grid).encode())
         
 
@@ -135,9 +135,9 @@ def join(address: Tuple[str, int]) -> str:
             if winner == "red": s.send(b'win'); time.sleep(0.1); s.send(b'win')
             elif winner == "full": s.send(b'full'); time.sleep(0.1); s.send(b'full')
             else: 
-                time.sleep(.5)
+                # time.sleep(.5)
                 s.send(b'9')
-                time.sleep(.5)
+                # time.sleep(.5)
                 s.send(json.dumps(grid).encode())
                 wrapper(multiplayer_waiting_screen, s, 1, grid)
                 s.setblocking(True) 
