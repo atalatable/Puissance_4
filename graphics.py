@@ -445,17 +445,17 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
 
         stdscr.refresh()
 
-        # Sending socket in background
-        readable, writable, exceptional = select.select(inputs, outputs, inputs, 1) 
+        # # Sending socket in background
+        # readable, writable, exceptional = select.select(inputs, outputs, inputs, 1) 
 
-        for s in writable:
-            # send the current cursor position
-            s.send(str(choice).encode()) 
-            # wait 0.001s to avoid bad data sending (like '-1-2')
-            time.sleep(0.001) 
+        # for s in writable:
+        #     # send the current cursor position
+        #     s.send(str(choice).encode()) 
 
+        stdscr.addstr(1, 0, str(choice))
+        s.send(str(choice).encode())
         k = stdscr.getch()
-
+        
 
 
 def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
@@ -490,20 +490,33 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
 
     # Set the socket to a non-blocking mode
     s.setblocking(False)
-
+    datas = []
     # Loop where k is the last character pressed
     while True:
         # Read the data in background
-        readable, writable, exceptional = select.select(inputs, outputs, inputs, 0.1)
+        # readable, writable, exceptional = select.select(inputs, outputs, inputs, 0.1)
 
-        for s in readable:
+        # for s in readable:
+        #     data = s.recv(1024).decode()
+        #     if data in ['play', 'win', 'full']: return
+        #     elif data.lstrip("-").isdigit(): choice = int(data)
+        #     datas.append(data)
+
+        try:
             data = s.recv(1024).decode()
-            if data in ['play', 'win', 'full']: return
-            else: choice = int(data)
+            s.setblocking(False)
+        except:
+            pass
+
+        if data in ['play', 'win', 'full']: return
+        elif data.lstrip("-").isdigit(): choice = int(data)
 
         # Initialization
         stdscr.clear()
         height, width = stdscr.getmaxyx()
+
+        stdscr.addstr(0, 0, str(datas))
+        stdscr.addstr(1, 0, str(choice))
         
         turnstr = ["It is Red's turn !", "It is Yellow's turn !"]
         turn_start = [int((width // 2) - (len(turnstr[0]) // 2) - len(turnstr[0]) % 2), 
