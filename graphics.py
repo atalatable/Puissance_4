@@ -382,9 +382,6 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 
-    inputs = [s]
-    outputs = [s]
-
     # Set the socket in 'non-blocking' mode
     s.setblocking(True)
 
@@ -446,13 +443,6 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
 
         stdscr.refresh()
 
-        # # Sending socket in background
-        # readable, writable, exceptional = select.select(inputs, outputs, inputs, 1) 
-
-        # for s in writable:
-        #     # send the current cursor position
-        #     s.send(str(choice).encode()) 
-
         stdscr.addstr(1, 0, str(choice))
 
         choice %= 7
@@ -473,10 +463,8 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
     """
     import select
 
-    choice = 0
-    data = "5"
-    inputs = [s]
-    outputs = [s]
+    choice = k = 0
+    data = '0'
 
     # nodelay permits to set the getch() in non-blocking mode
     stdscr.nodelay(1)
@@ -494,26 +482,19 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
 
     # Set the socket to a non-blocking mode
     s.setblocking(False)
-    datas = []
     # Loop where k is the last character pressed
     while True:
         # Read the data in background
-        # readable, writable, exceptional = select.select(inputs, outputs, inputs, 0.1)
-
-        # for s in readable:
-        #     data = s.recv(1024).decode()
-        #     if data in ['play', 'win', 'full']: return
-        #     elif data.lstrip("-").isdigit(): choice = int(data)
-        #     datas.append(data)
-
         try:
             data = s.recv(1).decode()
             s.setblocking(False)
         except:
             pass
 
-        if int(data) == 9: return
+        if data == 'p': return
         else: choice = int(data)
+
+        if k == KEY_ESC: return -1
 
         # Initialization
         stdscr.clear()
@@ -532,6 +513,11 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
         start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
         start_y = int((height // 2)-5)
+
+        stdscr.attron(curses.color_pair(3))
+        stdscr.addstr(height-1, 0, statusbarstr)
+        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.attroff(curses.color_pair(3))
         
         # Turning on attributes for title
         stdscr.attron(curses.color_pair(4))
@@ -564,7 +550,7 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         
         stdscr.refresh()
 
-        stdscr.getch()
+        k = stdscr.getch()
 
     
         
