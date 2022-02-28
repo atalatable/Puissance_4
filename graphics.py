@@ -551,6 +551,8 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         stdscr.refresh()
 
         k = stdscr.getch()
+        
+        curses.napms(20)
 
     
         
