@@ -33,8 +33,7 @@ def show_grid() -> None:
                 print(" \033[93m■\033[0m ", end="")
             else:
                 print("   ", end="")
-
-            
+ 
             print("|", end="")
         print()
     print('   +'+ f'{"-"*3}+'*7)
@@ -61,6 +60,7 @@ def add_piece(grid: list, color: int, column: int) -> bool:
     if color == 0: grid[5][column] = 1
     else: grid[5][column] = -1
 
+    return True
 
 if __name__ == "__main__":
     grid = load_grid("./grids/game.txt")

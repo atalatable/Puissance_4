@@ -1,13 +1,17 @@
 from curses import wrapper
 from typing import Tuple
-from graphics import multiplayer_play_screen, multiplayer_waiting_screen
+from graphics import losing_screen, winning_screen, multiplayer_play_screen, multiplayer_waiting_screen
 from check import verify_grid
 from save import add_piece
 import socket
 import json
 import time
+from requests import get
 
 from save import load_grid
+
+BACKLOG = 5
+SIZE = 169
 
 def multiplayer(s: socket, turn: int, grid: list) -> None:
     """manages the multiplayer playing logic
@@ -21,9 +25,10 @@ def multiplayer(s: socket, turn: int, grid: list) -> None:
     while winner == "" and not quit:
         column = wrapper(multiplayer_play_screen, s, turn, grid)
         if column == -1: break
-        add_piece(grid, turn, column)
-        winner = verify_grid(grid)
-        return (winner, grid)
+        check = add_piece(grid, turn, column)
+        if check:
+            winner = verify_grid(grid)
+            return (winner, grid)
 
 
 def host(address : Tuple[str, int], grid: list) -> str:
@@ -36,8 +41,6 @@ def host(address : Tuple[str, int], grid: list) -> str:
     Returns:
         str: return "red" if red wins "yellow" if yellow wins, "full" if the grid is full
     """
-    backlog = 5
-    size = 1024
 
     # Create the server (see the socket doc for further information)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,7 +50,9 @@ def host(address : Tuple[str, int], grid: list) -> str:
         print(e)
         return None
 
-    s.listen(backlog)
+    print(f'Your IP addresses :\n\nIPV4 : {get("https://api.ipify.org").text}\nIPV6 : {get("https://api64.ipify.org").text}')
+
+    s.listen(BACKLOG)
 
     # Waiting for client connection
     client, address = s.accept()
@@ -64,14 +69,15 @@ def host(address : Tuple[str, int], grid: list) -> str:
 
         try:
             # Waiting for the grid or information if he won
-            data = client.recv(size) 
+            data = client.recv(SIZE) 
+            print(data)
         except Exception as e:
             print(e)
             break
 
         # Check if the game is full or enemy has won else play
-        if "full" in [waiting, data.decode()]: winner = "full"
-        elif "win" in [waiting, data.decode()]: winner = "red"
+        if "f" in [waiting, data.decode()]: winner = "full"
+        elif "w" in [waiting, data.decode()]: winner = "red"
         else:
             # Display the game and get the results (the grid and the winner if he has won)
             (winner, grid) = multiplayer(client, 1, json.loads(data.decode()))
@@ -79,13 +85,15 @@ def host(address : Tuple[str, int], grid: list) -> str:
             # If he wins send to the opponent that he loses
             # first send -> close the waiting screen
             # second send -> inform the lose
-            if winner == "yellow": client.send(b'win'); time.sleep(0.1); client.send(b'win')
+            if winner == "yellow": client.send(b'p'); time.sleep(0.1); client.send(b'w')
             else: 
                 # Send that he can play and send the new grid
-                client.send(b'play')
-                time.sleep(0.1)
-                client.send(json.dumps(grid).encode())
-        
+                client.send(b'p')
+                client.sendall(json.dumps(grid).encode())
+
+
+    if winner == 'yellow': wrapper(winning_screen, -1)
+    elif winner == 'red': wrapper(losing_screen, -1)
 
     client.close()
     return winner
@@ -99,7 +107,6 @@ def join(address: Tuple[str, int]) -> str:
     Returns:
         str: return "red" if red wins "yellow" if yellow wins, "full" if the grid is full
     """
-    size = 1024
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Trying to connect to the server
@@ -117,25 +124,28 @@ def join(address: Tuple[str, int]) -> str:
 
         # Same process as the host
         try:
-            data = s.recv(size)
+            data = s.recv(SIZE)
+            print(data)
         except Exception as e:
             print(e)
             break
     
-        if data.decode() == 'full': winner = 'full'
-        elif data.decode() == 'win': winner = "yellow"
+        if data.decode() == 'f': winner = 'full'
+        elif data.decode() == 'w': winner = "yellow"
         else:
             (winner, grid) = multiplayer(s, 0, json.loads(data.decode()))
 
-            if winner == "red": s.send(b'win'); time.sleep(0.1); s.send(b'win')
-            elif winner == "full": s.send(b'full'); time.sleep(0.1); s.send(b'full')
+            if winner == "red": s.send(b'p'); time.sleep(0.1); s.send(b'w')
+            elif winner == "full": s.send(b'f'); time.sleep(0.1); s.send(b'f')
             else: 
-                s.send(b'play')
-                time.sleep(0.1)
+                s.send(b'p')
                 s.send(json.dumps(grid).encode())
                 wrapper(multiplayer_waiting_screen, s, 1, grid)
-        
+    
 
+    if winner == 'red': wrapper(winning_screen, 1)
+    elif winner == 'yellow': wrapper(losing_screen, 1)
+        
     s.close()
     return winner
 

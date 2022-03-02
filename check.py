@@ -8,6 +8,8 @@ def verify_grid(grid: list) -> str:
         str: return "red" if red wins "yellow" if yellow wins, "full" if the grid is full and "" if no one wins atm
     """
     # checking columns
+    if full_grid(grid): return "full"
+    
     for i in range(7):
         result = vertical_check(grid, i)
         if result: return result
@@ -26,9 +28,7 @@ def verify_grid(grid: list) -> str:
     for i in range(3):
         result = ascending_diagonal_check(grid, i)
         if result: return result
-        
-    if full_grid(grid): return "full"
-    
+
     return ""
 
 
@@ -120,7 +120,7 @@ def full_grid(grid: list) -> bool:
     Returns:
         bool: False if the grid is not full and True if it is
     """
-    for i in range(7):
-        for j in range(6):
+    for i in range(6):
+        for j in range(7):
             if grid[i][j] == 0: return False
     return True

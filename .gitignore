@@ -1,5 +1,13 @@
-grids/*
 grids/
 
+# excluding personnal settings
 .vscode/
 __pycache__/
+
+# Excluding the venv
+Include/
+Lib/
+Scripts/
+pyvenv.cfg
+
+logs/
