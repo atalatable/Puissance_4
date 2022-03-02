@@ -50,7 +50,7 @@ def host(address : Tuple[str, int], grid: list) -> str:
         print(e)
         return None
 
-    print(f'Your IP addresses :\n\nIPV4 : {get("https://api.ipify.org").text}\nIPV6 : {get("https://api64.ipify.org").text}')
+    print(f'Your IP addresses :\n\nIPV4 : {get("https://api.ipify.org").text}\nIPV6 : {get("https://api64.ipify.org").text}\n\nYou chose port {address[1]}.')
 
     s.listen(BACKLOG)
 
@@ -92,8 +92,8 @@ def host(address : Tuple[str, int], grid: list) -> str:
                 client.sendall(json.dumps(grid).encode())
 
 
-    if winner == 'yellow': wrapper(winning_screen, -1)
-    elif winner == 'red': wrapper(losing_screen, -1)
+    if winner == 'yellow': wrapper(winning_screen, -1, True)
+    elif winner == 'red': wrapper(losing_screen, -1, True)
 
     client.close()
     return winner
@@ -143,14 +143,13 @@ def join(address: Tuple[str, int]) -> str:
                 wrapper(multiplayer_waiting_screen, s, 1, grid)
     
 
-    if winner == 'red': wrapper(winning_screen, 1)
-    elif winner == 'yellow': wrapper(losing_screen, 1)
-        
+    if winner == 'red': wrapper(winning_screen, 1, True)
+    elif winner == 'yellow': wrapper(losing_screen, 1, True)
+ 
     s.close()
     return winner
 
 if __name__ == "__main__":
-    # print(get("https://api.ipify.org").text)
 
     t = input('(host | join) >>')
     grid = load_grid('./grids/game1.txt')
