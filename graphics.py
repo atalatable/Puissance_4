@@ -1,8 +1,8 @@
 # You need to install curses => pip install windows-curses
 import curses
-import time
 
 from init import KEY_ENTER, KEY_ESC, KEY_RETURN, KEY_NUM, KEY_DOT, grid
+from piece import Piece
 
 title =    "======= Four in a row ======="
 subtitle = "Made by KrishenK and Atalata."
@@ -450,7 +450,7 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
         s.send(str(choice).encode())
         k = stdscr.getch()
         
-
+        curses.napms(10)
 
 def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
     """Draws the for in a row grid and the opponent choice position
@@ -461,13 +461,12 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         turn (int): 0 if it is red's turn and 1 if it's yellow's turn
         grid (list): the four in a row grid
     """
-    import select
-
     choice = k = 0
     data = '0'
 
     # nodelay permits to set the getch() in non-blocking mode
     stdscr.nodelay(1)
+    stdscr.notimeout(1)
 
     # Clear and refresh the screen for a blank canvas
     stdscr.clear()
@@ -480,16 +479,20 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 
-    # Set the socket to a non-blocking mode
     s.setblocking(False)
+
+    # Set the socket to a non-blocking mode
     # Loop where k is the last character pressed
     while True:
+        
         # Read the data in background
+
         try:
             data = s.recv(1).decode()
             s.setblocking(False)
         except:
             pass
+
 
         if data == 'p': return
         else: choice = int(data)
@@ -551,10 +554,174 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         stdscr.refresh()
 
         k = stdscr.getch()
+    
+        curses.napms(10)
+
+
+def winning_screen(stdscr, winner: int) -> None:
+    """Draws the for in a row grid and the opponent choice position
+
+    Args:
+        stdsrcr (curses): look at curses doc for further details
+        winner (int): 1 if it is red's win and -1 if it's yellow's win
+    """
+    import random
+
+    k = 0
+
+    w = 0 if winner == -1 else 1
+
+    stdscr.nodelay(1)
+    
+    # Clear and refresh the screen for a blank canvas
+    stdscr.clear()
+    stdscr.refresh()
+
+    # Start colors in curses
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_RED)
+    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
+
+
+    height, width = stdscr.getmaxyx()
+    piece = Piece(16, 0.05)
+
+    row = [random.randint(1, 5) for i in range(1, 7)]
+    pieces = [[Piece(height//4, 0.05)]*i for i in row]
+
+    # Loop where k is the last character pressed
+    while True:
+        # Initialization
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+
+        if k == KEY_ESC: return -1
+        if k == curses.KEY_RESIZE: piece.setHeight(height)
+
         
+        winstr = ["Yellow won!", "Red won!"]
+        start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
+        start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
+        start_x_pieces = int((width // 2) - len(row))
+        start_x_win = int((width // 2) - (len(winstr[w]) // 2) - len(winstr[w]) % 2)
+
+        stdscr.attron(curses.color_pair(3))
+        stdscr.addstr(height-1, 0, statusbarstr)
+        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.attroff(curses.color_pair(3))
+        
+        # Turning on attributes for title
+        stdscr.attron(curses.color_pair(4))
+        stdscr.attron(curses.A_BOLD)
+
+        # Rendering title
+        stdscr.addstr(1, start_x_title, title)
+
+        # Turning off attributes for title
+        stdscr.attroff(curses.color_pair(4))
+        stdscr.attroff(curses.A_BOLD)
+
+        stdscr.addstr(3, start_x_subtitle, subtitle)                   
+        
+        for i in range(len(row)):
+            for j in range(row[i]):
+                if(pieces[i][j].isMoving()): pieces[i][j].calc()
+                if winner == 1: stdscr.addstr(int(height//2 - pieces[i][j].y) - (j + 2), start_x_pieces + (i * 2), "  ", curses.color_pair(1))
+                elif winner == -1: stdscr.addstr(int(height//2 - pieces[i][j].y) - (j + 2), start_x_pieces + (i * 2), "  ", curses.color_pair(2))
+        
+        # Winner 
+        stdscr.addstr(int((height // 2)), start_x_win, winstr[w])
+
+        stdscr.move(height - 1, width - 1)
+        
+        stdscr.refresh()
+
+        k = stdscr.getch()
+
         curses.napms(20)
 
+def losing_screen(stdscr, loser: int) -> None:
+    """Draws the for in a row grid and the opponent choice position
+
+    Args:
+        stdsrcr (curses): look at curses doc for further details
+        loser (int): 1 if it is red's win and -1 if it's yellow's win
+    """
+
+    k = 0
+
+    l = 0 if loser == -1 else 1
+
+    stdscr.nodelay(1)
     
+    # Clear and refresh the screen for a blank canvas
+    stdscr.clear()
+    stdscr.refresh()
+
+    # Start colors in curses
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_RED)
+    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
+
+
+    height, width = stdscr.getmaxyx()
+
+    piece = Piece(height//4, 0.05, 0.4)
+
+    # Loop where k is the last character pressed
+    while True:
+        # Initialization
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+
+        if k == KEY_ESC: return -1
+        if k == curses.KEY_RESIZE: piece.setHeight(height)
+
+        losestr = ["Yellow lost :(", "Red lost :("]
+        
+        start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
+        start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
+        start_x_pieces = int((width // 2) - 1)
+        start_x_lose = int((width // 2) - (len(losestr[l]) // 2) - len(losestr[l]) % 2)
+
+        stdscr.attron(curses.color_pair(3))
+        stdscr.addstr(height-1, 0, statusbarstr)
+        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.attroff(curses.color_pair(3))
+        
+        # Turning on attributes for title
+        stdscr.attron(curses.color_pair(4))
+        stdscr.attron(curses.A_BOLD)
+
+        # Rendering title
+        stdscr.addstr(1, start_x_title, title)
+
+        # Turning off attributes for title
+        stdscr.attroff(curses.color_pair(4))
+        stdscr.attroff(curses.A_BOLD)
+
+        stdscr.addstr(3, start_x_subtitle, subtitle)                   
+        
+        
+        if(piece.isMoving()): piece.calc()
+        if loser == 1: stdscr.addstr(int(height//2 - piece.y - 2), start_x_pieces, "  ", curses.color_pair(1))
+        elif loser == -1: stdscr.addstr(int(height//2 - piece.y - 2), start_x_pieces, "  ", curses.color_pair(2))
+        
+        # Loser 
+        stdscr.addstr(int((height // 2)), start_x_lose, losestr[l])
+
+        stdscr.move(height - 1, width - 1)
+        
+        stdscr.refresh()
+
+        k = stdscr.getch()
+
+        curses.napms(20)
+
         
 def main():
     choice = -1

@@ -1,6 +1,6 @@
 from curses import wrapper
 from typing import Tuple
-from graphics import multiplayer_play_screen, multiplayer_waiting_screen
+from graphics import losing_screen, winning_screen, multiplayer_play_screen, multiplayer_waiting_screen
 from check import verify_grid
 from save import add_piece
 import socket
@@ -70,7 +70,7 @@ def host(address : Tuple[str, int], grid: list) -> str:
         try:
             # Waiting for the grid or information if he won
             data = client.recv(SIZE) 
-            print(len(data))
+            print(data)
         except Exception as e:
             print(e)
             break
@@ -85,14 +85,15 @@ def host(address : Tuple[str, int], grid: list) -> str:
             # If he wins send to the opponent that he loses
             # first send -> close the waiting screen
             # second send -> inform the lose
-            if winner == "yellow": client.send(b'w'); time.sleep(0.1); client.send(b'w')
+            if winner == "yellow": client.send(b'p'); time.sleep(0.1); client.send(b'w')
             else: 
                 # Send that he can play and send the new grid
-                # time.sleep(.5)
                 client.send(b'p')
-                # time.sleep(.5)
-                client.send(json.dumps(grid).encode())
-        
+                client.sendall(json.dumps(grid).encode())
+
+
+    if winner == 'yellow': wrapper(winning_screen, -1)
+    elif winner == 'red': wrapper(losing_screen, -1)
 
     client.close()
     return winner
@@ -124,6 +125,7 @@ def join(address: Tuple[str, int]) -> str:
         # Same process as the host
         try:
             data = s.recv(SIZE)
+            print(data)
         except Exception as e:
             print(e)
             break
@@ -133,15 +135,16 @@ def join(address: Tuple[str, int]) -> str:
         else:
             (winner, grid) = multiplayer(s, 0, json.loads(data.decode()))
 
-            if winner == "red": s.send(b'w'); time.sleep(0.1); s.send(b'w')
+            if winner == "red": s.send(b'p'); time.sleep(0.1); s.send(b'w')
             elif winner == "full": s.send(b'f'); time.sleep(0.1); s.send(b'f')
             else: 
-                # time.sleep(.5)
                 s.send(b'p')
-                # time.sleep(.5)
                 s.send(json.dumps(grid).encode())
                 wrapper(multiplayer_waiting_screen, s, 1, grid)
-                s.setblocking(True) 
+    
+
+    if winner == 'red': wrapper(winning_screen, 1)
+    elif winner == 'yellow': wrapper(losing_screen, 1)
         
     s.close()
     return winner
