@@ -212,7 +212,7 @@ def multiplayer_menu(stdscr) -> int:
         elif k == KEY_ENTER: return choice%3 + 1
 
         # Declaration of strings
-        optionstr = ["1. Create ", "2. Join", "3. Return    "]
+        optionstr = ["1. Create ", "2. Join", "3. Menu   "]
         
         # Centering calculations
         start_x_option = int((width // 2) - (len(optionstr[0]) // 2) - len(optionstr[0]) % 2)
@@ -273,6 +273,9 @@ def multiplayer_address_menu(stdscr, type: int, host: str = '', port: int = 0) -
     ipstr = host
     portstr = str(port) if port != 0 else ''
 
+    # Number of choice
+    dc = 3 if type == 1 else 2
+
     # Clear and refresh the screen for a blank canvas
     stdscr.clear()
     stdscr.refresh()
@@ -292,27 +295,27 @@ def multiplayer_address_menu(stdscr, type: int, host: str = '', port: int = 0) -
 
         if k == KEY_ESC: return -1     # Return
         elif k == KEY_ENTER: 
-            if choice%3 != 2: choice += 1
+            if (type == 1 and choice%dc != 2) or (type == 0 and choice%dc != 1): choice += 1
             else: return (ipstr, int(portstr))
         elif k == curses.KEY_UP: choice -= 1
         elif k == curses.KEY_DOWN: choice += 1
         elif k == KEY_RETURN: 
-            if choice%3 == 0: ipstr = ipstr[:-1]
-            if choice%3 == 1: portstr = portstr[:-1]
+            if choice%dc == 0 and type == 1: ipstr = ipstr[:-1]
+            if (type == 1 and choice%dc == 1) or (type == 0 and choice%dc == 0): portstr = portstr[:-1]
         elif k in KEY_NUM or k == KEY_DOT: 
-            if choice%3 == 0: ipstr += chr(k)
-            if choice%3 == 1: portstr += chr(k)
-        
-        # print(k)
+            if choice%dc == 0 and type == 1: ipstr += chr(k)
+            if (type == 1 and choice%dc == 1) or (type == 0 and choice%dc == 0): portstr += chr(k)
 
         # Declaration of strings
-        iplabelstr = "Address : "
+        iplabelstr = "Address : " if type == 1 else ""
         portlabelstr = "Port : "
         connectstr = "Connect" if type == 1 else "Create"
+
+        stdscr.addstr(0, 0, str(choice%dc))
         
         # Centering calculations
-        start_x_ip = int((width // 2) - (len(iplabelstr) // 2) - len(iplabelstr) % 2)
         start_x_port = int((width // 2) - (len(portlabelstr) // 2) - len(portlabelstr) % 2)
+        start_x_ip = int((width // 2) - (len(iplabelstr) // 2) - len(iplabelstr) % 2) if type == 1 else start_x_port - 2
         start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
         start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
         start_y = int((height // 2) - 2)
@@ -339,9 +342,11 @@ def multiplayer_address_menu(stdscr, type: int, host: str = '', port: int = 0) -
         stdscr.addstr(2, (width // 2) - 3, '-' * 6)
 
         # Print port and join input
-        inputs = [iplabelstr+ipstr, portlabelstr+portstr, connectstr]
+        if type == 1: inputs = [iplabelstr+ipstr, portlabelstr+portstr, connectstr]
+        else: inputs = [portlabelstr+portstr, connectstr]
+
         for i in range(len(inputs)):
-            if i == choice%3: 
+            if i == choice%dc: 
                 stdscr.addstr(start_y + i*2, start_x_ip, f'> {inputs[i]}', curses.A_BOLD)
             else:
                 stdscr.addstr(start_y + i*2, start_x_port, inputs[i])
@@ -366,8 +371,6 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
     Returns:
         int: return the column in which the player wants to play
     """
-    import select, time
-
     k = 0
     choice = 0
 
@@ -396,9 +399,8 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
         if k == curses.KEY_LEFT: choice -= 1
         if k == KEY_ENTER: return choice % 7        
         
-        turnstr = ["It is Red's turn !", "It is Yellow's turn !"]
-        turn_start = [int((width // 2) - (len(turnstr[0]) // 2) - len(turnstr[0]) % 2), 
-                      int((width // 2) - (len(turnstr[1]) // 2) - len(turnstr[1]) % 2)]
+        turnstr = "It's your turn"
+        turn_start = int((width // 2) - (len(turnstr) // 2) - len(turnstr) % 2)
         linestr_1 = "+----"*7 + "+"
         linestr_2 = "|    "*7 + "|"
         
@@ -437,7 +439,7 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
                 if grid[i][j] == 1: stdscr.addstr(start_y + 1 + (i * 2), start_x_grid + 2 + (j*5), "  ", curses.color_pair(1))
                 elif grid[i][j] == -1: stdscr.addstr(start_y + 1 + (i * 2), start_x_grid + 2 + (j*5), "  ", curses.color_pair(2))
                 
-        stdscr.addstr(height - 3, turn_start[turn], turnstr[turn])
+        stdscr.addstr(height - 3, turn_start, turnstr)
 
         stdscr.move(height - 1, width - 1)
 
@@ -506,9 +508,8 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         stdscr.addstr(0, 0, str(data))
         stdscr.addstr(1, 0, str(choice))
         
-        turnstr = ["It is Red's turn !", "It is Yellow's turn !"]
-        turn_start = [int((width // 2) - (len(turnstr[0]) // 2) - len(turnstr[0]) % 2), 
-                      int((width // 2) - (len(turnstr[1]) // 2) - len(turnstr[1]) % 2)]
+        turnstr = "It is Your opponent's turn !"
+        turn_start = int((width // 2) - (len(turnstr) // 2) - len(turnstr) % 2)
         linestr_1 = "+----"*7 + "+"
         linestr_2 = "|    "*7 + "|"
         
@@ -547,7 +548,7 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
                 if grid[i][j] == 1: stdscr.addstr(start_y + 1 + (i * 2), start_x_grid + 2 + (j*5), "  ", curses.color_pair(1))
                 elif grid[i][j] == -1: stdscr.addstr(start_y + 1 + (i * 2), start_x_grid + 2 + (j*5), "  ", curses.color_pair(2))
                 
-        stdscr.addstr(height - 3, turn_start[turn], turnstr[turn])
+        stdscr.addstr(height - 3, turn_start, turnstr)
 
         stdscr.move(height - 1, width - 1)
         
@@ -558,18 +559,20 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         curses.napms(10)
 
 
-def winning_screen(stdscr, winner: int) -> None:
+def winning_screen(stdscr, winner: int, online: bool) -> None:
     """Draws the for in a row grid and the opponent choice position
 
     Args:
         stdsrcr (curses): look at curses doc for further details
         winner (int): 1 if it is red's win and -1 if it's yellow's win
+        online (bool): True if from an online game
     """
     import random
 
     k = 0
 
-    w = 0 if winner == -1 else 1
+    if online: w = 0
+    else: w = 1 if winner == -1 else 2
 
     stdscr.nodelay(1)
     
@@ -601,7 +604,7 @@ def winning_screen(stdscr, winner: int) -> None:
         if k == curses.KEY_RESIZE: piece.setHeight(height)
 
         
-        winstr = ["Yellow won!", "Red won!"]
+        winstr = ["You won :)", "Yellow won!", "Red won!"]
         start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
         start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
         start_x_pieces = int((width // 2) - len(row))
@@ -642,17 +645,18 @@ def winning_screen(stdscr, winner: int) -> None:
 
         curses.napms(20)
 
-def losing_screen(stdscr, loser: int) -> None:
+def losing_screen(stdscr, loser: int, online: bool) -> None:
     """Draws the for in a row grid and the opponent choice position
 
     Args:
         stdsrcr (curses): look at curses doc for further details
         loser (int): 1 if it is red's win and -1 if it's yellow's win
+        online (bool): True if from an online game
     """
 
     k = 0
 
-    l = 0 if loser == -1 else 1
+    if online: l = 0
 
     stdscr.nodelay(1)
     
@@ -681,12 +685,12 @@ def losing_screen(stdscr, loser: int) -> None:
         if k == KEY_ESC: return -1
         if k == curses.KEY_RESIZE: piece.setHeight(height)
 
-        losestr = ["Yellow lost :(", "Red lost :("]
+        losestr = "You lost :("
         
         start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
         start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
         start_x_pieces = int((width // 2) - 1)
-        start_x_lose = int((width // 2) - (len(losestr[l]) // 2) - len(losestr[l]) % 2)
+        start_x_lose = int((width // 2) - (len(losestr) // 2) - len(losestr) % 2)
 
         stdscr.attron(curses.color_pair(3))
         stdscr.addstr(height-1, 0, statusbarstr)
@@ -712,7 +716,7 @@ def losing_screen(stdscr, loser: int) -> None:
         elif loser == -1: stdscr.addstr(int(height//2 - piece.y - 2), start_x_pieces, "  ", curses.color_pair(2))
         
         # Loser 
-        stdscr.addstr(int((height // 2)), start_x_lose, losestr[l])
+        stdscr.addstr(int((height // 2)), start_x_lose, losestr)
 
         stdscr.move(height - 1, width - 1)
         
