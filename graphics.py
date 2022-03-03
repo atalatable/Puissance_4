@@ -273,6 +273,9 @@ def multiplayer_address_menu(stdscr, type: int, host: str = '', port: int = 0) -
     ipstr = host
     portstr = str(port) if port != 0 else ''
 
+    # Number of choice
+    dc = 3 if type == 1 else 2
+
     # Clear and refresh the screen for a blank canvas
     stdscr.clear()
     stdscr.refresh()
@@ -292,21 +295,23 @@ def multiplayer_address_menu(stdscr, type: int, host: str = '', port: int = 0) -
 
         if k == KEY_ESC: return -1     # Return
         elif k == KEY_ENTER: 
-            if choice%3 != 2: choice += 1
+            if (type == 1 and choice%dc != 2) or (type == 0 and choice%dc != 1): choice += 1
             else: return (ipstr, int(portstr))
         elif k == curses.KEY_UP: choice -= 1
         elif k == curses.KEY_DOWN: choice += 1
         elif k == KEY_RETURN: 
-            if choice%3 == 0: ipstr = ipstr[:-1]
-            if choice%3 == 1: portstr = portstr[:-1]
+            if choice%dc == 0 and type == 1: ipstr = ipstr[:-1]
+            if (type == 1 and choice%dc == 1) or (type == 0 and choice%dc == 0): portstr = portstr[:-1]
         elif k in KEY_NUM or k == KEY_DOT: 
-            if choice%3 == 0: ipstr += chr(k)
-            if choice%3 == 1: portstr += chr(k)
+            if choice%dc == 0 and type == 1: ipstr += chr(k)
+            if (type == 1 and choice%dc == 1) or (type == 0 and choice%dc == 0): portstr += chr(k)
 
         # Declaration of strings
         iplabelstr = "Address : " if type == 1 else ""
         portlabelstr = "Port : "
         connectstr = "Connect" if type == 1 else "Create"
+
+        stdscr.addstr(0, 0, str(choice%dc))
         
         # Centering calculations
         start_x_port = int((width // 2) - (len(portlabelstr) // 2) - len(portlabelstr) % 2)
@@ -337,9 +342,11 @@ def multiplayer_address_menu(stdscr, type: int, host: str = '', port: int = 0) -
         stdscr.addstr(2, (width // 2) - 3, '-' * 6)
 
         # Print port and join input
-        inputs = [iplabelstr+ipstr, portlabelstr+portstr, connectstr]
+        if type == 1: inputs = [iplabelstr+ipstr, portlabelstr+portstr, connectstr]
+        else: inputs = [portlabelstr+portstr, connectstr]
+
         for i in range(len(inputs)):
-            if i == choice%3: 
+            if i == choice%dc: 
                 stdscr.addstr(start_y + i*2, start_x_ip, f'> {inputs[i]}', curses.A_BOLD)
             else:
                 stdscr.addstr(start_y + i*2, start_x_port, inputs[i])
@@ -364,8 +371,6 @@ def multiplayer_play_screen(stdscr, s, turn: int, grid: list) -> int:
     Returns:
         int: return the column in which the player wants to play
     """
-    import select, time
-
     k = 0
     choice = 0
 
