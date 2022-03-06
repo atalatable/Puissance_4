@@ -310,8 +310,6 @@ def multiplayer_address_menu(stdscr, type: int, host: str = '', port: int = 0) -
         iplabelstr = "Address : " if type == 1 else ""
         portlabelstr = "Port : "
         connectstr = "Connect" if type == 1 else "Create"
-
-        stdscr.addstr(0, 0, str(choice%dc))
         
         # Centering calculations
         start_x_port = int((width // 2) - (len(portlabelstr) // 2) - len(portlabelstr) % 2)
@@ -504,9 +502,6 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         # Initialization
         stdscr.clear()
         height, width = stdscr.getmaxyx()
-
-        stdscr.addstr(0, 0, str(data))
-        stdscr.addstr(1, 0, str(choice))
         
         turnstr = "It is Your opponent's turn !"
         turn_start = int((width // 2) - (len(turnstr) // 2) - len(turnstr) % 2)
@@ -557,6 +552,111 @@ def multiplayer_waiting_screen(stdscr, s, turn: int, grid: list) -> None:
         k = stdscr.getch()
     
         curses.napms(10)
+
+def multiplayer_waiting_connection(stdscr, s) -> None:
+    """Draws the for in a row grid and the opponent choice position
+
+    Args:
+        stdsrcr (curses): look at curses doc for further details
+        winner (int): 1 if it is red's win and -1 if it's yellow's win
+        online (bool): True if from an online game
+    """
+    import threading, time
+    from requests import get
+
+    stdscr.nodelay(1)
+
+    global response
+    response = None
+
+    k = 0
+    
+    # Clear and refresh the screen for a blank canvas
+    stdscr.clear()
+    stdscr.refresh()
+
+    # Start colors in curses
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_RED)
+    curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
+
+
+    height, width = stdscr.getmaxyx()
+
+    def accept():
+        global response
+        response = s.accept()
+
+    thread = threading.Thread(target=accept)
+    thread.start()
+
+    start = time.time()
+
+    waitingstr = "Waiting for connection"
+    infostr = f'Server host on {get("https://api.ipify.org").text}:{s.getsockname()[1]}'
+    ipv6 = get("https://api64.ipify.org").text
+    ipv6str = f'IPv6 : {ipv6}' if ipv6 != '' else ''
+
+    # Loop where k is the last character pressed
+    while True:
+        # Initialization
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+
+        if k == KEY_ESC: return -1
+
+        if response != None: return response
+            
+
+        start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
+        start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
+        start_x_waiting = int((width // 2) - (len(waitingstr) // 2) - len(waitingstr) % 2)
+        start_x_info = int((width // 2) - (len(infostr) // 2) - len(infostr) % 2)
+        start_x_ipv6 = int((width // 2) - (len(ipv6str) // 2) - len(ipv6str) % 2)
+        
+        stdscr.attron(curses.color_pair(3))
+        stdscr.addstr(height-1, 0, statusbarstr)
+        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.attroff(curses.color_pair(3))
+        
+        # Turning on attributes for title
+        stdscr.attron(curses.color_pair(4))
+        stdscr.attron(curses.A_BOLD)
+
+        # Rendering title
+        stdscr.addstr(1, start_x_title, title)
+
+        # Turning off attributes for title
+        stdscr.attroff(curses.color_pair(4))
+        stdscr.attroff(curses.A_BOLD)
+
+        stdscr.addstr(3, start_x_subtitle, subtitle)                   
+        
+        # Content
+        stdscr.addstr(int((height // 2) - 5), start_x_info, infostr)
+        stdscr.addstr(height - 3, start_x_ipv6, ipv6str)
+
+        # Turning on attributes for waiting
+        stdscr.attron(curses.color_pair(2))
+        stdscr.attron(curses.A_DIM)
+
+        # Rendering waiting
+        stdscr.addstr(int((height // 2)), start_x_waiting, waitingstr+"."*(int((time.time() - start)*3) % 3+1))
+
+        # Turning off attributes for waiting
+        stdscr.attroff(curses.color_pair(2))
+        stdscr.attroff(curses.A_DIM)
+        
+
+
+        stdscr.move(height - 1, width - 1)
+        
+        stdscr.refresh()
+
+        k = stdscr.getch()
+        curses.napms(20)
 
 
 def winning_screen(stdscr, winner: int, online: bool) -> None:

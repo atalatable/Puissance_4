@@ -1,12 +1,11 @@
 from curses import wrapper
 from typing import Tuple
-from graphics import losing_screen, winning_screen, multiplayer_play_screen, multiplayer_waiting_screen
+from graphics import losing_screen, winning_screen, multiplayer_play_screen, multiplayer_waiting_screen, multiplayer_waiting_connection
 from check import verify_grid
 from save import add_piece
 import socket
 import json
 import time
-from requests import get
 
 from save import load_grid
 
@@ -39,7 +38,7 @@ def host(address : Tuple[str, int], grid: list) -> str:
         grid (list): the four in a row grid
 
     Returns:
-        str: return "red" if red wins "yellow" if yellow wins, "full" if the grid is full
+        str: return "red" if red wins "yellow" if yellow wins, "full" if the grid is full, "quit" if the host quit
     """
 
     # Create the server (see the socket doc for further information)
@@ -50,12 +49,12 @@ def host(address : Tuple[str, int], grid: list) -> str:
         print(e)
         return None
 
-    print(f'Your IP addresses :\n\nIPV4 : {get("https://api.ipify.org").text}\nIPV6 : {get("https://api64.ipify.org").text}\n\nYou chose port {address[1]}.')
-
     s.listen(BACKLOG)
 
     # Waiting for client connection
-    client, address = s.accept()
+    connection = wrapper(multiplayer_waiting_connection, s)
+    if connection == -1: return "quit"
+    else: client, address = connection
 
     # Send the grid to the opponent
     client.send(json.dumps(grid).encode())
